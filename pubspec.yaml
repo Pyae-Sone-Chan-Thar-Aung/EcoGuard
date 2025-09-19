@@ -1,0 +1,67 @@
+name: ecoguard
+description: EcoGuard – eco actions & learning (demo)
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+  supabase_flutter: ^2.0.0
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Routing
+  go_router: ^14.2.0
+
+  # Local storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Charts (latest compatible)
+  fl_chart: ^0.70.0
+
+  # Date/number formatting (must match Flutter SDK)
+  intl: ^0.20.2
+
+  # Flutter localization support
+  flutter_localizations:
+    sdk: flutter
+
+  # JSON serialization annotations
+  json_annotation: ^4.9.0
+
+  # Camera and AR functionality
+  camera: ^0.10.6
+  path_provider: ^2.1.4
+  image_picker: ^1.1.2
+  
+  # Location services (simplified)
+  # google_maps_flutter: ^2.9.0
+  # location: ^7.0.0
+  # geolocator: ^13.0.1
+  
+  # HTTP requests
+  http: ^1.2.2
+  
+  # URL launcher for directions
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code generation
+  build_runner: ^2.4.8
+  json_serializable: ^6.7.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/avatars/
+    - assets/images/ewaste/
