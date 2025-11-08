@@ -56,6 +56,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Linting
+  flutter_lints: ^5.0.0
+
   # Code generation
   build_runner: ^2.4.8
   json_serializable: ^6.7.1

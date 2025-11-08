@@ -6,38 +6,179 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/config/app_config.dart';
+import 'core/error/error_handler.dart';
+import 'core/error/app_logger.dart';
 import 'services/notifications/notification_service.dart';
 import 'services/points/points_service.dart';
 import 'services/performance/performance_service.dart';
 import 'services/cache/cache_service.dart';
 import 'services/ai/ai_recommendation_service.dart';
 import 'services/gamification/gamification_service.dart';
-import 'services/ewaste/smart_categorization_service.dart';
 
-
-// ⚡ Supabase config
-const supabaseUrl = 'https://tlawzidglriindqvhayo.supabase.co';
-const supabaseKey =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsYXd6aWRnbHJpaW5kcXZoYXlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyNTEyNzEsImV4cCI6MjA3MjgyNzI3MX0.cxPwfzO-xsQQY7-Ofp8sAp49Rp6NsuPs5Hz1XXEidag';
-
+/// Application entry point
 Future<void> main() async {
+  // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive for local storage
-  await Hive.initFlutter();
+  // Initialize global error handler
+  ErrorHandler.initialize();
 
-  // Initialize Supabase
-  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseKey);
+  final AppLogger logger = AppLogger('Main');
 
-  // Initialize services
-  await NotificationService().initialize();
-  await PointsService().initialize();
-  await PerformanceService().initialize();
-  await CacheService().initialize();
-  await AIRecommendationService().initialize();
-  await GamificationService().initialize();
+  try {
+    logger.info('Initializing EcoGuard application...');
 
-  runApp(const ProviderScope(child: EcoGuardApp()));
+    // Initialize Hive for local storage
+    await _initializeHive(logger);
+
+    // Initialize Supabase
+    await _initializeSupabase(logger);
+
+    // Initialize services
+    await _initializeServices(logger);
+
+    logger.info('Application initialization complete');
+
+    // Run the app
+    runApp(const ProviderScope(child: EcoGuardApp()));
+  } catch (e, stackTrace) {
+    logger.error(
+      'Failed to initialize application',
+      error: e,
+      stackTrace: stackTrace,
+    );
+    
+    // Show error to user
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Failed to start EcoGuard',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Error: ${e.toString()}',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Initialize Hive local storage
+Future<void> _initializeHive(AppLogger logger) async {
+  try {
+    logger.debug('Initializing Hive...');
+    await Hive.initFlutter();
+    logger.info('Hive initialized successfully');
+  } catch (e, stackTrace) {
+    logger.error(
+      'Failed to initialize Hive',
+      error: e,
+      stackTrace: stackTrace,
+    );
+    rethrow;
+  }
+}
+
+/// Initialize Supabase
+Future<void> _initializeSupabase(AppLogger logger) async {
+  try {
+    logger.debug('Initializing Supabase...');
+    await Supabase.initialize(
+      url: AppConfig.supabaseUrl,
+      anonKey: AppConfig.supabaseAnonKey,
+    );
+    logger.info('Supabase initialized successfully');
+  } catch (e, stackTrace) {
+    logger.error(
+      'Failed to initialize Supabase',
+      error: e,
+      stackTrace: stackTrace,
+    );
+    rethrow;
+  }
+}
+
+/// Initialize all application services
+Future<void> _initializeServices(AppLogger logger) async {
+  final List<Future<void>> serviceInits = <Future<void>>[
+    _initializeService(
+      'NotificationService',
+      () => NotificationService().initialize(),
+      logger,
+    ),
+    _initializeService(
+      'PointsService',
+      () => PointsService().initialize(),
+      logger,
+    ),
+    _initializeService(
+      'PerformanceService',
+      () => PerformanceService().initialize(),
+      logger,
+    ),
+    _initializeService(
+      'CacheService',
+      () => CacheService().initialize(),
+      logger,
+    ),
+    _initializeService(
+      'AIRecommendationService',
+      () => AIRecommendationService().initialize(),
+      logger,
+    ),
+    _initializeService(
+      'GamificationService',
+      () => GamificationService().initialize(),
+      logger,
+    ),
+  ];
+
+  await Future.wait(serviceInits);
+  logger.info('All services initialized successfully');
+}
+
+/// Initialize a single service with error handling
+Future<void> _initializeService(
+  String serviceName,
+  Future<void> Function() initFunction,
+  AppLogger logger,
+) async {
+  try {
+    logger.debug('Initializing $serviceName...');
+    await initFunction();
+    logger.info('$serviceName initialized successfully');
+  } catch (e, stackTrace) {
+    logger.warning(
+      'Failed to initialize $serviceName (continuing anyway)',
+      error: e,
+      stackTrace: stackTrace,
+    );
+    // Don't rethrow - allow app to continue with degraded functionality
+  }
 }
 
 class EcoGuardApp extends ConsumerWidget {
@@ -55,7 +196,7 @@ class EcoGuardApp extends ConsumerWidget {
       themeMode: ThemeMode.system,
       routerConfig: router,
 
-      // ✅ Basic localization support (without missing AppLocalizations)
+      // Localization support
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
