@@ -1,10 +1,5 @@
 /// Application configuration
-/// 
-/// This file manages environment-specific configurations including
-/// API keys, URLs, and other sensitive data.
-/// 
-/// **IMPORTANT**: Never commit sensitive credentials to version control.
-/// Use environment variables or a secure secrets management solution.
+
 class AppConfig {
   AppConfig._();
 
@@ -19,8 +14,7 @@ class AppConfig {
   static bool get isStaging => environment == 'staging';
 
   // Supabase Configuration
-  // TODO: Move these to environment variables or secure storage
-  // For now, using placeholders - replace with actual values from secure source
+  
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
     defaultValue: 'https://tlawzidglriindqvhayo.supabase.co',
